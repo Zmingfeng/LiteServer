@@ -114,7 +114,7 @@ bool httpRequest::userVerify(const std::string username, const std::string passw
     if (username == "" || passwd == "")
         return false;
     MYSQL *sql;
-    sqlConnRAII(&sql, sqlPool::getInstance());
+    sqlConnRAII s(&sql, sqlPool::getInstance());
     assert(sql);
     char cmd[256] = {0};
 
