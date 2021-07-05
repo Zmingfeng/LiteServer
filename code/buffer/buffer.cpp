@@ -207,6 +207,7 @@ ssize_t Buffer::writeBufferfromFd(int fd, int *saveErrno)
         setWritePos(Buffer_.size());
         Append(tempBuff, len - writableSize);
     }
+    std::cout << len << std::endl;
     return len;
 }
 

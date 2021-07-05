@@ -71,21 +71,25 @@ void WebServer::start()
             uint32_t events = Epoller_->getEvent(i);
             if (fd == listenFd_)
             {
+                std::cout << "listen" << std::endl;
                 dealListen_();
             }
             else if (events & (EPOLLHUP | EPOLLRDHUP | EPOLLERR))
             {
                 assert(Users_.count(fd) > 0);
+                std::cout << "close" << std::endl;
                 closeConn_(&Users_[fd]);
             }
             else if (events & EPOLLIN)
             { //有数据可读
                 assert(Users_.count(fd) > 0);
+                std::cout << "read" << std::endl;
                 dealRead_(&Users_[fd]);
             }
             else if (events & EPOLLOUT)
             {
                 assert(Users_.count(fd) > 0);
+                std::cout << "write" << std::endl;
                 dealWrite_(&Users_[fd]);
             }
             else
@@ -99,7 +103,7 @@ void WebServer::dealListen_()
     socklen_t len = sizeof(addr);
     do
     {
-        size_t fd = accept(listenFd_, (struct sockaddr *)&addr, &len);
+        int fd = accept(listenFd_, (struct sockaddr *)&addr, &len);
         if (fd < 0)
             return;
         else if (httpConn::userCount >= MAX_FD)
@@ -242,7 +246,7 @@ bool WebServer::InitSocket_()
 void WebServer::setNonBlock(int fd)
 {
     assert(fd >= 0);
-    fcntl(listenFd_, F_SETFL, fcntl(listenFd_, F_GETFD, 0) | O_NONBLOCK);
+    fcntl(fd, F_SETFL, fcntl(fd, F_GETFD, 0) | O_NONBLOCK);
 }
 void WebServer::dealRead_(httpConn *client)
 {
@@ -263,12 +267,14 @@ void WebServer::Read_(httpConn *client)
     int ret = -1;
     int readErrno = 0;
     ret = client->read(&readErrno); //从fd读到buffer
+
     //读出问题了，而且不是内核缓冲区空的原因
     if (ret <= 0 && readErrno != EAGAIN)
     {
         closeConn_(client);
         return;
     }
+
     onProcess(client);
 }
 
